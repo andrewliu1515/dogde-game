@@ -1,88 +1,147 @@
-/* === 行動版視窗與舞台鎖定 === */
-html, body {
-  height: 100%;
-  margin: 0;
-  overflow: hidden;               /* 禁止整頁滾動 */
-  overscroll-behavior: none;
-  touch-action: manipulation;
-  background: #0b1420;
-  color: #e6eef7;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans TC", sans-serif;
-}
-:root { --vh: 100vh; }
-
-#stage {
-  position: fixed;
-  inset: 0;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right)
-           env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-#stageInner {
-  position: relative;
-  width: 100%;
-  height: 100svh;     /* 新版正確可視高 */
-  height: 100dvh;
-  height: calc(var(--vh)); /* 舊機由 JS 覆寫 px 值 */
-  overflow: hidden;
+:root{
+  --bg0:#0a0f15;
+  --stroke:#1f2a38;
+  --brand:#58d0ff;
+  --text:#dbe7f5;
+  --muted:#89a1b8;
 }
 
-/* 畫布鋪滿 */
-#game { display:block; width:100%; height:100%; }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background: radial-gradient(1200px 600px at 10% -10%, #132131 0, transparent 60%),
+              radial-gradient(900px 600px at 110% 10%, #1a2a3f 0, transparent 50%),
+              var(--bg0);
+  color:var(--text);
+  font:14px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",Arial,sans-serif;
+}
+
+/* 容器（桌機不過大、手機全螢幕） */
+#app{height:100%;display:grid;place-items:center}
+#gameWrap{
+  position:relative;
+  width:clamp(360px, 46vw, 560px);
+  aspect-ratio: 9 / 16;
+  max-height:96vh;
+  background:linear-gradient(180deg, #0b1420, #070d14);
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.5), 0 6px 18px rgba(0,0,0,.4);
+}
+#game{width:100%;height:100%;display:block}
+@media (max-width:700px){
+  #gameWrap{width:100vw;height:100vh;max-height:none;aspect-ratio:auto;border-radius:0;border:none}
+}
+
+/* 暫停鍵 */
+.btn.pause{
+  position:absolute; right:10px; top:10px; z-index:6;
+  width:42px; height:42px; border-radius:10px;
+  border:1px solid rgba(120,160,200,.25);
+  background:linear-gradient(180deg, rgba(30,50,70,.85), rgba(18,26,40,.9));
+  color:#fff; font-weight:800;
+  box-shadow:0 6px 16px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+}
 
 /* HUD */
-.hud { position:absolute; top:8px; left:8px; display:flex; gap:8px; z-index: 5; }
-.badge {
-  background: rgba(0,0,0,.35);
-  backdrop-filter: blur(6px);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;
-  padding:6px 10px;
-  font-size:14px;
+#hud{
+  position:absolute; left:8px; top:8px; z-index:5;
+  display:flex; gap:10px; flex-wrap:wrap; font-weight:600; text-shadow:0 1px 0 #000;
+}
+#hud > div{
+  padding:6px 10px; border-radius:10px;
+  background:rgba(16,24,38,.55);
+  border:1px solid rgba(80,110,150,.25);
 }
 
-/* 暫停鈕 */
-.pause-btn {
-  position:absolute; top:8px; right:8px; z-index:5;
-  width:44px; height:44px; border-radius:12px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.35);
-  color:#fff; font-weight:700;
+/* 手機虛擬按鍵：左下左右、右下跳 */
+#mobileControls{ position:absolute; inset:auto 0 12px 0; z-index:5; pointer-events:none; }
+#ctrlLeft{ position:absolute; left:12px; bottom:12px; display:flex; gap:12px }
+#ctrlRight{ position:absolute; right:12px; bottom:12px; display:flex; gap:12px }
+.vkey{
+  pointer-events:auto;
+  width:86px; height:86px; border-radius:16px;
+  border:1px solid rgba(120,160,200,.25);
+  background:linear-gradient(180deg, rgba(20,30,45,.85), rgba(12,18,28,.9));
+  color:#fff; font-size:22px; font-weight:800;
+  box-shadow:0 10px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.vkey.jump{width:100px; font-size:26px}
+@media (max-width:480px){
+  .vkey{width:74px; height:74px; font-size:20px}
+  .vkey.jump{width:90px; font-size:24px}
 }
 
-/* 面板 */
-.panel { position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:10; }
-.panel[aria-hidden="false"]{ display:flex; }
-.card, .modal {
-  width:min(720px, calc(100% - 32px));
-  background: rgba(8,12,18,.85);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:16px; padding:18px; backdrop-filter: blur(10px);
+/* 面板（大廳、暫停、結算） */
+.panel{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:10;
+  padding:18px;
+  transition:opacity .25s ease, transform .25s ease;
+  background:linear-gradient(180deg, rgba(7,11,18,.65), rgba(10,16,24,.65));
+  backdrop-filter: blur(8px);
 }
-.card h1{ margin:0 0 12px; font-size:28px; }
-.tabs{ display:flex; gap:8px; margin:6px 0 12px; }
-.tab-btn{ padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#121a27; color:#cfe2ff; }
-.tab-btn.active{ background:#1a2536; color:#fff; }
-.tab-panel{ display:none; }
-.tab-panel.active{ display:block; }
-.form{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:8px 0 12px; }
-.form label{ display:flex; justify-content:space-between; align-items:center; gap:10px; background:#0e1520; border:1px solid rgba(255,255,255,.08); padding:8px 10px; border-radius:10px; }
-.actions{ display:flex; gap:10px; justify-content:flex-end; }
-.primary{ background:#2a74ff; border:none; color:#fff; border-radius:10px; padding:10px 14px; }
-.list{ margin:0; padding-left:18px; line-height:1.6; }
+.panel.small .panel-card{width:min(520px,95%)}
+.panel[aria-hidden="true"]{opacity:0; pointer-events:none; transform:scale(.98)}
+.panel-card{
+  width:min(700px, 95%);
+  background:linear-gradient(180deg, rgba(16,24,38,.76), rgba(12,20,32,.8));
+  border:1px solid rgba(120,160,200,.28);
+  border-radius:18px; padding:16px 18px 18px;
+  box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.panel-header{margin:2px 2px 12px 2px}
+.brand{display:flex; align-items:center; gap:10px; margin:0; font-size:26px}
+.brand-mark{width:18px; height:18px; border-radius:50%;
+  background: radial-gradient(circle at 40% 35%, var(--brand) 0, #1f7db3 40%, transparent 62%),
+              conic-gradient(from 0.2turn, #0ff 0 30%, #4ff 30% 60%, transparent 0);
+  box-shadow:0 0 30px var(--brand);
+}
+.sub{color:var(--muted); margin-top:4px}
 
-/* 手機虛擬鍵：左右同側、跳獨立側 */
-#mobileControls{
-  position:absolute; left:0; right:0; bottom:12px; z-index:5;
-  display:flex; justify-content:space-between; padding:0 12px;
+/* Tabs / 表單 / 按鈕 */
+.tabs{display:flex; gap:10px; margin:6px 2px 12px}
+.tab-btn{
+  padding:8px 12px; border-radius:10px;
+  background:linear-gradient(180deg, rgba(26,36,52,.8), rgba(20,30,45,.85));
+  border:1px solid rgba(120,160,200,.28);
+  color:#cfe6ff; font-weight:700; cursor:pointer; user-select:none;
 }
-.pad{ display:flex; gap:10px; }
-.control{
-  width:64px; height:64px; border-radius:16px;
-  border:1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.35);
-  color:#fff; font-size:20px; font-weight:700;
+.tab-btn.active{outline:2px solid #2aa2e2; color:#fff}
+.tab-panels{
+  border:1px solid rgba(120,160,200,.28); border-radius:12px; padding:14px;
+  background:linear-gradient(180deg, rgba(18,26,40,.7), rgba(14,22,34,.75))
 }
-.control.jump{ width:80px; }
+.tab-panel{display:none}
+.tab-panel.active{display:block}
 
-/* 結束／暫停面板 */
-.modal h2{ margin:0 0 12px; }
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.col.span-2{grid-column:span 2}
+.label{display:block; font-weight:700; margin-bottom:6px}
+.input, .range, .btn, select{
+  width:100%; padding:10px 12px; border-radius:12px; color:#e8f3ff;
+  background:linear-gradient(180deg, rgba(22,32,48,.85), rgba(14,20,30,.9));
+  border:1px solid rgba(120,160,200,.28);
+}
+.range{padding:6px}
+.actions{display:flex; gap:12px; margin:10px 0 2px}
+.btn{
+  background:linear-gradient(180deg, rgba(30,50,70,.9), rgba(18,26,40,.95));
+  font-weight:800; letter-spacing:.4px; box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+  cursor:pointer; color:#fff;
+}
+.btn.primary{background:linear-gradient(180deg, #1e7fb5, #11547a); border-color:#2aa2e2}
+.btn:hover{filter:brightness(1.05)}
+
+.buffs{margin:0; padding-left:0; list-style:none}
+.buff-item{display:flex; align-items:center; gap:10px; margin:10px 0}
+.tag{display:inline-block; min-width:58px; text-align:center; padding:2px 8px; border-radius:10px; margin-right:8px; font-weight:800; color:#0c1521}
+.tag-air{background:#9fe3ff}
+.tag-spike{background:#ffd36b}
+.tag-nuke{background:#ff9ea8}
+
+#gameWrap, .panel-card{contain:content}
+@media (max-width:520px){
+  .grid{grid-template-columns:1fr}
+}
