@@ -145,3 +145,9 @@ body{
 @media (max-width:520px){
   .grid{grid-template-columns:1fr}
 }
+html, body { height:100%; margin:0; overflow:hidden; background:#0b1420; touch-action:manipulation; }
+#stage { position:fixed; inset:0; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); overscroll-behavior:none; }
+:root { --vh:100vh; }
+#stageInner { position:relative; width:100%; height:100svh; height:100dvh; height:calc(var(--vh)); overflow:hidden; }
+#game { display:block; width:100%; height:100%; }
+.panel, .hud, #mobileControls, .pause-btn { position:absolute; }

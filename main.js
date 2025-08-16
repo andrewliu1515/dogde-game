@@ -1,3 +1,16 @@
+function lockViewportHeight() {
+  const vh = (window.visualViewport && window.visualViewport.height)
+    ? Math.floor(window.visualViewport.height)
+    : Math.floor(window.innerHeight);
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+lockViewportHeight();
+window.addEventListener('resize', lockViewportHeight);
+window.addEventListener('orientationchange', lockViewportHeight);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', lockViewportHeight);
+  window.visualViewport.addEventListener('scroll', lockViewportHeight);
+}
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');

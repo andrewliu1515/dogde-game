@@ -1,164 +1,124 @@
-<!doctype html>
-<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DodgeSphere</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <title>Dodge Game</title>
+  <style>
+    :root { --vh: 100vh; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;           /* 禁止整頁滾動 */
+      touch-action: manipulation; /* 禁止雙擊放大 */
+      background: #0b1420;
+    }
+
+    /* 外層舞台固定鋪滿螢幕 */
+    #stage {
+      position: fixed;
+      inset: 0;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    /* 內層容器高度鎖定為實際可視高度 */
+    #stageInner {
+      position: relative;
+      width: 100%;
+      height: calc(var(--vh));
+    }
+
+    /* 畫布鋪滿 */
+    #game {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #111;
+    }
+
+    /* HUD / 面板 / 控制按鍵都要絕對定位 */
+    .hud, .panel, #mobileControls {
+      position: absolute;
+      color: white;
+      font-size: 20px;
+    }
+
+    .hud { top: 10px; left: 10px; }
+    #mobileControls {
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+    }
+
+    #mobileControls button {
+      font-size: 18px;
+      margin: 0 5px;
+      padding: 8px 12px;
+    }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <div id="gameWrap">
-      <!-- 暫停鍵 -->
-      <button id="btnPause" class="btn pause" aria-label="暫停">Ⅱ</button>
-
+  <div id="stage">
+    <div id="stageInner">
       <canvas id="game"></canvas>
-
-      <!-- 手機虛擬按鍵：左下左右、右下跳 -->
-      <div id="mobileControls" aria-hidden="true">
-        <div id="ctrlLeft">
-          <button id="btnLeft"  class="vkey" aria-label="向左">◀</button>
-          <button id="btnRight" class="vkey" aria-label="向右">▶</button>
-        </div>
-        <div id="ctrlRight">
-          <button id="btnJump"  class="vkey jump" aria-label="跳躍">⟰</button>
-        </div>
+      <div class="hud">分數: <span id="score">0</span></div>
+      <div id="mobileControls">
+        <button id="left">左</button>
+        <button id="right">右</button>
       </div>
-
-      <!-- HUD -->
-      <div id="hud">
-        <div id="statKilled">消滅：0</div>
-        <div id="statState">狀態：待機</div>
-        <div id="statInvul">增益：—</div>
-      </div>
-
-      <!-- 大廳 -->
-      <section id="startPanel" class="panel" aria-hidden="false">
-        <div class="panel-card">
-          <header class="panel-header">
-            <h1 class="brand">
-              <span class="brand-mark"></span>DodgeSphere
-            </h1>
-            <div class="sub">閃避、跳躍、清場、升級</div>
-          </header>
-
-          <nav class="tabs">
-            <button class="tab-btn active" data-tab="play">開始遊戲</button>
-            <button class="tab-btn" data-tab="rules">遊戲規則</button>
-            <button class="tab-btn" data-tab="buffs">Buff 說明</button>
-          </nav>
-
-          <div class="tab-panels">
-            <!-- 開始遊戲 -->
-            <div class="tab-panel active" id="tab-play">
-              <div class="grid">
-                <div class="col">
-                  <label class="label">難度</label>
-                  <select id="inpDifficulty" class="input">
-                    <option value="1">1（最多同時 7 顆）</option>
-                    <option value="2" selected>2（最多同時 10 顆）</option>
-                    <option value="3">3（最多同時 13 顆）</option>
-                  </select>
-                </div>
-                <div class="col">
-                  <label class="label">背景</label>
-                  <select id="inpBgStyle" class="input">
-                    <option value="digital" selected>數位風格</option>
-                    <option value="flame">火焰風格</option>
-                  </select>
-                </div>
-                <div class="col">
-                  <label class="label">我方顏色</label>
-                  <input id="inpColorPlayer" class="input" type="color" value="#58d0ff" />
-                </div>
-                <div class="col">
-                  <label class="label">敵方顏色</label>
-                  <input id="inpColorEnemy" class="input" type="color" value="#ff3b3b" />
-                </div>
-                <div class="col span-2">
-                  <label class="label">音量</label>
-                  <input id="inpBgmVol" class="range" type="range" min="0" max="100" value="50" />
-                </div>
-              </div>
-
-              <div class="actions">
-                <button id="startBtn" class="btn primary">開始遊戲</button>
-              </div>
-
-              <div class="meta">
-                <div>鍵盤：← → 或 A / D 移動，空白鍵跳躍（長按蓄力；30 殺解鎖三段跳）。</div>
-                <div>手機：左下左右鍵；右下跳鍵。</div>
-              </div>
-            </div>
-
-            <!-- 規則 -->
-            <div class="tab-panel" id="tab-rules">
-              <ol class="rules">
-                <li>從敵球上方掠過即可消滅該敵球。</li>
-                <li>無盡模式：敵球數與速度隨擊殺數對數增長，上限由難度決定。</li>
-                <li>第 15 殺起敵球出現尾跡；第 25 殺觸發場景強化；第 35 殺敵球彩虹色。</li>
-                <li>≥25 殺後，按規則隨機掉落 Buff 球。</li>
-                <li>死亡可復活：純無敵 3 秒（不清場、不帶尖刺）。</li>
-              </ol>
-            </div>
-
-            <!-- Buff 說明 -->
-            <div class="tab-panel" id="tab-buffs">
-              <ul class="buffs">
-                <li class="buff-item">
-                  <span class="tag tag-air">AIR</span>
-                  <strong>無限跳躍＋尖刺 10 秒</strong>：期間可在空中無限連跳，且碰觸敵球立即消滅。
-                </li>
-                <li class="buff-item">
-                  <span class="tag tag-spike">SPIKE</span>
-                  尖刺 5 秒（單純尖刺，不影響跳躍）。
-                </li>
-                <li class="buff-item">
-                  <span class="tag tag-nuke">NUKE</span>
-                  立刻清空全場敵球（全場清屏）。
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 暫停面板 -->
-      <section id="pausePanel" class="panel small" aria-hidden="true">
-        <div class="panel-card small">
-          <header class="panel-header">
-            <h2>暫停</h2>
-            <div class="sub">你要繼續或回到大廳？</div>
-          </header>
-          <div class="actions">
-            <button id="continueBtn" class="btn primary">繼續</button>
-            <button id="pauseQuitBtn" class="btn">回到大廳</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 結算面板 -->
-      <section id="endPanel" class="panel" aria-hidden="true">
-        <div class="panel-card small">
-          <header class="panel-header">
-            <h2 id="endTitle">結束</h2>
-            <div id="endMsg" class="sub"></div>
-          </header>
-          <div class="actions">
-            <button id="reviveBtn" class="btn">復活</button>
-            <button id="restartBtn" class="btn">重新開始</button>
-            <button id="quitBtn" class="btn">返回大廳</button>
-          </div>
-        </div>
-      </section>
-
     </div>
   </div>
 
-  <!-- 音效 -->
-  <audio id="bgm" src="assets/bgm.mp3" loop></audio>
-  <audio id="sfxLevelUp" src="assets/levelup.mp3"></audio>
+  <script>
+    // === 修正視窗高度 ===
+    function lockViewportHeight() {
+      const vh = (window.visualViewport && window.visualViewport.height)
+        ? Math.floor(window.visualViewport.height)
+        : Math.floor(window.innerHeight);
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    lockViewportHeight();
+    window.addEventListener('resize', lockViewportHeight);
+    window.addEventListener('orientationchange', lockViewportHeight);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', lockViewportHeight);
+      window.visualViewport.addEventListener('scroll', lockViewportHeight);
+    }
 
-  <script src="main.js"></script>
+    // === 遊戲邏輯（示範簡化版） ===
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const box = canvas.parentElement.getBoundingClientRect();
+      canvas.width = Math.floor(box.width);
+      canvas.height = Math.floor(box.height);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let playerX = 50;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.arc(playerX, canvas.height - 50, 20, 0, Math.PI * 2);
+      ctx.fill();
+      requestAnimationFrame(draw);
+    }
+    draw();
+
+    // 控制鍵
+    document.getElementById('left').addEventListener('click', () => {
+      playerX -= 20;
+    });
+    document.getElementById('right').addEventListener('click', () => {
+      playerX += 20;
+    });
+  </script>
 </body>
 </html>
