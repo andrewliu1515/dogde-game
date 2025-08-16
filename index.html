@@ -4,23 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport"
         content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <title>Smoke Test - Dodge</title>
-  <link rel="stylesheet" href="style.css?v=st1">
+  <title>DodgeSphere</title>
+  <link rel="stylesheet" href="style.css?v=fv1">
 </head>
 <body>
-  <!-- 固定舞台：所有東西都放進來 -->
   <div id="stage">
     <div id="stageInner">
       <canvas id="game"></canvas>
 
-      <!-- HUD（只顯示分數與狀態） -->
+      <!-- HUD -->
       <div id="hud" class="hud">
-        <div class="badge">消滅：<span id="score">0</span></div>
-        <div class="badge">狀態：<span id="state">測試中</span></div>
+        <div class="badge">消滅：<span id="statKilled">0</span></div>
+        <div class="badge">狀態：<span id="statState">待機</span></div>
+        <div class="badge">增益：<span id="statBuff">—</span></div>
       </div>
 
-      <!-- 手機虛擬鍵：左右同側；跳獨立側 -->
-      <div id="mobileControls" aria-hidden="false">
+      <!-- 暫停鈕 -->
+      <button id="btnPause" class="pause-btn" aria-label="暫停">II</button>
+
+      <!-- 手機虛擬鍵：左右同側、跳獨立側 -->
+      <div id="mobileControls" aria-hidden="true">
         <div class="pad pad-left">
           <button id="btnLeft"  class="control">◀</button>
           <button id="btnRight" class="control">▶</button>
@@ -29,9 +32,94 @@
           <button id="btnJump"  class="control jump">⟰</button>
         </div>
       </div>
+
+      <!-- 大廳 -->
+      <section id="startPanel" class="panel" aria-hidden="false">
+        <div class="card">
+          <h1>DodgeSphere</h1>
+
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="start">開始</button>
+            <button class="tab-btn" data-tab="rules">遊戲規則</button>
+            <button class="tab-btn" data-tab="buff">Buff 說明</button>
+          </div>
+
+          <div id="tab-start" class="tab-panel active">
+            <div class="form">
+              <label>難度
+                <select id="inpDifficulty">
+                  <option value="1">1（最多 7 顆）</option>
+                  <option value="2" selected>2（最多 10 顆）</option>
+                  <option value="3">3（最多 13 顆）</option>
+                </select>
+              </label>
+              <label>背景
+                <select id="inpBgStyle">
+                  <option value="digital" selected>數位</option>
+                  <option value="flame">火焰</option>
+                </select>
+              </label>
+              <label>我方顏色 <input type="color" id="inpColorPlayer" value="#58d0ff"></label>
+              <label>敵方顏色 <input type="color" id="inpColorEnemy"  value="#ff3b3b"></label>
+              <label>音量 <input type="range" id="inpBgmVol" min="0" max="100" value="55"></label>
+            </div>
+            <div class="actions">
+              <button id="startBtn" class="primary">開始遊戲</button>
+            </div>
+          </div>
+
+          <div id="tab-rules" class="tab-panel">
+            <ul class="list">
+              <li>鍵盤：A/← 左，D/→ 右，Space 跳；行動裝置請用下方虛擬鍵。</li>
+              <li>從上方掠過敵球即可消滅；被撞到則結束，可選復活（無敵 3 秒）。</li>
+              <li>敵球數與速度隨擊殺數成長，約在 40 殺達到難度上限（1:7／2:10／3:13）。</li>
+              <li>15 殺起敵球帶尾跡；25 殺場景強化；≥35 殺敵球彩虹色。</li>
+              <li>30 殺解鎖三連跳，會有公告與慢動作演出。</li>
+            </ul>
+          </div>
+
+          <div id="tab-buff" class="tab-panel">
+            <ul class="list">
+              <li><b>尖刺</b>：7 秒，碰到敵球直接消滅。</li>
+              <li><b>AIR</b>：4.5 秒，無限跳＋尖刺。</li>
+              <li><b>NUKE</b>：慢動作＋氣波，清除距玩家最近的最多 7 顆敵球。</li>
+              <li>掉落規則：自 25 殺起，每 +10 殺隨機掉 1 顆 Buff 球。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 暫停面板 -->
+      <section id="pausePanel" class="panel" aria-hidden="true">
+        <div class="modal">
+          <h2>暫停</h2>
+          <div class="actions">
+            <button id="continueBtn" class="primary">繼續</button>
+            <button id="pauseQuitBtn">回到大廳</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 結束面板 -->
+      <section id="endPanel" class="panel" aria-hidden="true">
+        <div class="modal">
+          <h2 id="endTitle">結束</h2>
+          <p id="endMsg">本回合消滅 0 顆。</p>
+          <div class="actions">
+            <button id="reviveBtn" class="primary">復活</button>
+            <button id="restartBtn">重新開始</button>
+            <button id="quitBtn">回到大廳</button>
+          </div>
+        </div>
+      </section>
+
     </div>
   </div>
 
-  <script src="main.js?v=st1"></script>
+  <!-- 音效資源 -->
+  <audio id="bgm" src="assets/bgm.mp3" preload="auto"></audio>
+  <audio id="sfxLevelUp" src="assets/level-up.mp3" preload="auto"></audio>
+
+  <script src="main.js?v=fv1"></script>
 </body>
 </html>

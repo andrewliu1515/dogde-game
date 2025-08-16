@@ -1,58 +1,79 @@
-/* 鎖住全頁不捲動、正確底色與字型 */
+/* === 行動版視窗與舞台鎖定 === */
 html, body {
   height: 100%;
   margin: 0;
-  overflow: hidden;
+  overflow: hidden;               /* 禁止整頁滾動 */
   overscroll-behavior: none;
   touch-action: manipulation;
   background: #0b1420;
   color: #e6eef7;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans TC", sans-serif;
 }
-
-/* 用 CSS 變數承接 JS 寫入的實際視窗高度 */
 :root { --vh: 100vh; }
 
-/* 舞台固定鋪滿，考慮瀏海安全區 */
 #stage {
   position: fixed;
   inset: 0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
            env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
-
-/* 內層以 svh/dvh 優先，舊機以 --vh 回退 */
 #stageInner {
   position: relative;
   width: 100%;
-  height: 100svh;
+  height: 100svh;     /* 新版正確可視高 */
   height: 100dvh;
-  height: calc(var(--vh));
+  height: calc(var(--vh)); /* 舊機由 JS 覆寫 px 值 */
   overflow: hidden;
 }
 
 /* 畫布鋪滿 */
-#game { display: block; width: 100%; height: 100%; }
+#game { display:block; width:100%; height:100%; }
 
 /* HUD */
-.hud {
-  position: absolute;
-  top: 8px; left: 8px;
-  display: flex; gap: 8px; z-index: 5;
-}
+.hud { position:absolute; top:8px; left:8px; display:flex; gap:8px; z-index: 5; }
 .badge {
   background: rgba(0,0,0,.35);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-  padding: 6px 10px;
-  font-size: 14px;
   backdrop-filter: blur(6px);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:6px 10px;
+  font-size:14px;
 }
 
-/* 手機虛擬鍵：左右同側，跳獨立側 */
+/* 暫停鈕 */
+.pause-btn {
+  position:absolute; top:8px; right:8px; z-index:5;
+  width:44px; height:44px; border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.35);
+  color:#fff; font-weight:700;
+}
+
+/* 面板 */
+.panel { position:absolute; inset:0; display:none; align-items:center; justify-content:center; z-index:10; }
+.panel[aria-hidden="false"]{ display:flex; }
+.card, .modal {
+  width:min(720px, calc(100% - 32px));
+  background: rgba(8,12,18,.85);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px; padding:18px; backdrop-filter: blur(10px);
+}
+.card h1{ margin:0 0 12px; font-size:28px; }
+.tabs{ display:flex; gap:8px; margin:6px 0 12px; }
+.tab-btn{ padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#121a27; color:#cfe2ff; }
+.tab-btn.active{ background:#1a2536; color:#fff; }
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+.form{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:8px 0 12px; }
+.form label{ display:flex; justify-content:space-between; align-items:center; gap:10px; background:#0e1520; border:1px solid rgba(255,255,255,.08); padding:8px 10px; border-radius:10px; }
+.actions{ display:flex; gap:10px; justify-content:flex-end; }
+.primary{ background:#2a74ff; border:none; color:#fff; border-radius:10px; padding:10px 14px; }
+.list{ margin:0; padding-left:18px; line-height:1.6; }
+
+/* 手機虛擬鍵：左右同側、跳獨立側 */
 #mobileControls{
-  position: absolute; left: 0; right: 0; bottom: 12px; z-index: 5;
-  display: flex; justify-content: space-between; padding: 0 12px;
+  position:absolute; left:0; right:0; bottom:12px; z-index:5;
+  display:flex; justify-content:space-between; padding:0 12px;
 }
 .pad{ display:flex; gap:10px; }
 .control{
@@ -62,3 +83,6 @@ html, body {
   color:#fff; font-size:20px; font-weight:700;
 }
 .control.jump{ width:80px; }
+
+/* 結束／暫停面板 */
+.modal h2{ margin:0 0 12px; }
