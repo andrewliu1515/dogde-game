@@ -1,124 +1,37 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
   <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-  <title>Dodge Game</title>
-  <style>
-    :root { --vh: 100vh; }
-
-    html, body {
-      height: 100%;
-      margin: 0;
-      overflow: hidden;           /* 禁止整頁滾動 */
-      touch-action: manipulation; /* 禁止雙擊放大 */
-      background: #0b1420;
-    }
-
-    /* 外層舞台固定鋪滿螢幕 */
-    #stage {
-      position: fixed;
-      inset: 0;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right)
-               env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
-
-    /* 內層容器高度鎖定為實際可視高度 */
-    #stageInner {
-      position: relative;
-      width: 100%;
-      height: calc(var(--vh));
-    }
-
-    /* 畫布鋪滿 */
-    #game {
-      display: block;
-      width: 100%;
-      height: 100%;
-      background: #111;
-    }
-
-    /* HUD / 面板 / 控制按鍵都要絕對定位 */
-    .hud, .panel, #mobileControls {
-      position: absolute;
-      color: white;
-      font-size: 20px;
-    }
-
-    .hud { top: 10px; left: 10px; }
-    #mobileControls {
-      bottom: 20px; left: 50%;
-      transform: translateX(-50%);
-    }
-
-    #mobileControls button {
-      font-size: 18px;
-      margin: 0 5px;
-      padding: 8px 12px;
-    }
-  </style>
+        content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <title>Smoke Test - Dodge</title>
+  <link rel="stylesheet" href="style.css?v=st1">
 </head>
 <body>
+  <!-- 固定舞台：所有東西都放進來 -->
   <div id="stage">
     <div id="stageInner">
       <canvas id="game"></canvas>
-      <div class="hud">分數: <span id="score">0</span></div>
-      <div id="mobileControls">
-        <button id="left">左</button>
-        <button id="right">右</button>
+
+      <!-- HUD（只顯示分數與狀態） -->
+      <div id="hud" class="hud">
+        <div class="badge">消滅：<span id="score">0</span></div>
+        <div class="badge">狀態：<span id="state">測試中</span></div>
+      </div>
+
+      <!-- 手機虛擬鍵：左右同側；跳獨立側 -->
+      <div id="mobileControls" aria-hidden="false">
+        <div class="pad pad-left">
+          <button id="btnLeft"  class="control">◀</button>
+          <button id="btnRight" class="control">▶</button>
+        </div>
+        <div class="pad pad-right">
+          <button id="btnJump"  class="control jump">⟰</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // === 修正視窗高度 ===
-    function lockViewportHeight() {
-      const vh = (window.visualViewport && window.visualViewport.height)
-        ? Math.floor(window.visualViewport.height)
-        : Math.floor(window.innerHeight);
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
-    lockViewportHeight();
-    window.addEventListener('resize', lockViewportHeight);
-    window.addEventListener('orientationchange', lockViewportHeight);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', lockViewportHeight);
-      window.visualViewport.addEventListener('scroll', lockViewportHeight);
-    }
-
-    // === 遊戲邏輯（示範簡化版） ===
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-
-    function resizeCanvas() {
-      const box = canvas.parentElement.getBoundingClientRect();
-      canvas.width = Math.floor(box.width);
-      canvas.height = Math.floor(box.height);
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    let playerX = 50;
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'red';
-      ctx.beginPath();
-      ctx.arc(playerX, canvas.height - 50, 20, 0, Math.PI * 2);
-      ctx.fill();
-      requestAnimationFrame(draw);
-    }
-    draw();
-
-    // 控制鍵
-    document.getElementById('left').addEventListener('click', () => {
-      playerX -= 20;
-    });
-    document.getElementById('right').addEventListener('click', () => {
-      playerX += 20;
-    });
-  </script>
+  <script src="main.js?v=st1"></script>
 </body>
 </html>
